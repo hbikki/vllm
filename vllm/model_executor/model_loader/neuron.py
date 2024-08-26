@@ -123,14 +123,28 @@ def get_neuron_model(model_config: ModelConfig,
     neuron_config = NeuronConfig(
         continuous_batching=continuous_batching_config)
 
+    context_length_estimates = list(
+        map(
+            int,
+            filter(
+                lambda x: x is not None and len(x.strip()) > 0,
+                os.getenv("NEURON_CONTEXT_LENGTH_BUCKETS",
+                          "").split(",")))) or scheduler_config.max_model_len
+    n_positions = list(
+        map(
+            int,
+            filter(
+                lambda x: x is not None and len(x.strip()) > 0,
+                os.getenv("NEURON_TOKEN_GEN_BUCKETS",
+                          "").split(",")))) or scheduler_config.max_model_len
+
     # Load the weights from the cached or downloaded files.
-    model.load_weights(
-        model_config.model,
-        tp_degree=parallel_config.tensor_parallel_size,
-        amp=TORCH_DTYPE_TO_NEURON_AMP[model_config.dtype],
-        neuron_config=neuron_config,
-        context_length_estimate=[scheduler_config.max_model_len],
-        n_positions=[scheduler_config.max_model_len],
-        batch_size=scheduler_config.max_num_seqs)
+    model.load_weights(model_config.model,
+                       tp_degree=parallel_config.tensor_parallel_size,
+                       amp=TORCH_DTYPE_TO_NEURON_AMP[model_config.dtype],
+                       neuron_config=neuron_config,
+                       context_length_estimate=context_length_estimates,
+                       n_positions=n_positions,
+                       batch_size=scheduler_config.max_num_seqs)
 
     return model.eval()

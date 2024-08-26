@@ -1,5 +1,10 @@
+import os
 from vllm import LLM, SamplingParams
 
+os.environ['NEURONX_DUMP_TO'] = "./Cache"
+
+os.environ['NEURON_CONTEXT_LENGTH_BUCKETS'] = "512,1024,2048"
+os.environ['NEURON_TOKEN_GEN_BUCKETS'] = "512,1024,2048"
 # Sample prompts.
 prompts = [
     "Hello, my name is",
@@ -19,8 +24,8 @@ llm = LLM(
     # Currently, this is a known limitation in continuous batching support
     # in transformers-neuronx.
     # TODO(liangfu): Support paged-attention in transformers-neuronx.
-    max_model_len=128,
-    block_size=128,
+    max_model_len=2048,
+    block_size=2048,
     # The device can be automatically detected when AWS Neuron SDK is installed.
     # The device argument can be either unspecified for automated detection,
     # or explicitly assigned.
